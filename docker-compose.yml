@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db:
+    image: mariadb:10.6
+    container_name: kimai-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: kimai
+      MYSQL_USER: kimai
+      MYSQL_PASSWORD: kimai
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+    networks:
+      - kimai-net
+
+  app:
+    image: kimai/kimai2:apache
+    container_name: kimai-app
+    restart: always
+    ports:
+      - "80:8001"
+    environment:
+      - APP_ENV=prod
+      - DATABASE_URL=mysql://kimai:kimai@kimai-db/kimai
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - kimai-net
+
+volumes:
+  mysql_data:
+
+networks:
+  kimai-net:
+
